@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/dhowden/tag"
-	"github.com/ttacon/chalk"
+	"github.com/fatih/color"
 )
 
 func main() {
@@ -43,6 +43,11 @@ func main() {
 	}
 
 	audioObjs := make(AudioFiles, 0, len(list))
+	green := color.New(color.FgGreen)
+	yellow := color.New(color.FgYellow)
+	megenta := color.New(color.FgMagenta)
+	red := color.New(color.FgRed)
+
 	for _, name := range list {
 		ext := filepath.Ext(name)
 		if isAudioFile(ext) {
@@ -54,15 +59,29 @@ func main() {
 				Ext:          strings.ToLower(ext),
 			}
 			if a.Title == "" || a.Artist == "" {
-				fmt.Println("["+chalk.Red.Color("-")+"]", chalk.Magenta.Color(name), "does not have enough meta data")
+				fmt.Printf("[")
+				red.Printf("-")
+				fmt.Printf("] ")
+				megenta.Printf(name)
+				fmt.Printf(" does not have enough meta data\n")
 				continue
 			}
 			newName := a.Title + " - " + a.Artist + ext
 			if a.OriginalName == newName {
-				fmt.Println("["+chalk.Red.Color("-")+"]", chalk.Magenta.Color(name), "has already a good name")
+				fmt.Printf("[")
+				red.Printf("-")
+				fmt.Printf("] ")
+				megenta.Printf(name)
+				fmt.Printf(" has already a good name\n")
 				continue
 			}
-			fmt.Println("[" + chalk.Green.Color("+") + "] " + chalk.Magenta.Color(name) + " will be renamed to " + chalk.Green.Color(newName))
+			fmt.Printf("[")
+			green.Printf("+")
+			fmt.Printf("] ")
+			megenta.Printf(name)
+			fmt.Printf(" will be renamed to ")
+			green.Printf(newName)
+			fmt.Printf("\n")
 
 			audioObjs = append(audioObjs, a)
 		}
@@ -79,8 +98,9 @@ func main() {
 			if err := os.Rename(filepath.Join(dir, obj.OriginalName), filepath.Join(dir, obj.Title+" - "+obj.Artist+obj.Ext)); err != nil {
 				log.Fatal("Failed to rename", obj.OriginalName)
 			}
-
-			fmt.Println(obj.OriginalName + " => " + obj.Title + " - " + obj.Artist + obj.Ext)
+			fmt.Printf(obj.OriginalName)
+			yellow.Printf(" => ")
+			fmt.Printf(obj.Title + " - " + obj.Artist + obj.Ext + "\n")
 		} else {
 			fmt.Println(obj.OriginalName, "does not exist")
 		}
@@ -93,7 +113,9 @@ func main() {
 			if err := os.Rename(filepath.Join(dir, obj.Title+" - "+obj.Artist+obj.Ext), filepath.Join(dir, obj.OriginalName)); err != nil {
 				log.Fatal("Failed to rename", obj.OriginalName)
 			}
-			fmt.Println(obj.Title + " - " + obj.Artist + obj.Ext + " => " + obj.OriginalName)
+			fmt.Printf(obj.Title + " - " + obj.Artist + obj.Ext)
+			yellow.Printf(" => ")
+			fmt.Printf(obj.OriginalName + "\n")
 		} else {
 			fmt.Println(obj.OriginalName, "does not exist")
 		}
@@ -104,12 +126,12 @@ func main() {
 func parseAudioFile(str string, wd string) tag.Metadata {
 	file, err := os.Open(filepath.Join(wd, str))
 	if err != nil {
-		log.Fatal("Failed to open audio file ", str, "\n", err)
+		log.Fatal("Failed to open audio file ", str, err)
 	}
 	defer file.Close()
 	m, err := tag.ReadFrom(file)
 	if err != nil {
-		log.Fatal("Failed to read from file ", str, "\n", err)
+		log.Fatal("Failed to read from file ", str, err)
 	}
 	return m
 }
@@ -149,7 +171,7 @@ func prompt(question string) bool {
 	return false
 }
 
-// Checks if a file exists
+// Checks if the file exists
 func fileExists(filename string, wd string) bool {
 	info, err := os.Stat(filepath.Join(wd, filename))
 	if os.IsNotExist(err) {
